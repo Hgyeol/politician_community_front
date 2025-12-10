@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const mapLayers = svg.select("g"); // Select the main group that contains all map elements
 
     const zoom = d3.zoom()
-        .scaleExtent([0.5, 8]) // Set zoom limits (e.g., 0.5x to 8x)
+        .scaleExtent([0.5, 20]) // Set zoom limits (e.g., 0.5x to 8x)
         .on("zoom", zoomed);
 
     function zoomed() {
