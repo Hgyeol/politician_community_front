@@ -31,4 +31,17 @@ document.addEventListener('DOMContentLoaded', function() {
     zoomResetButton.on("click", () => {
         svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity); // Reset zoom
     });
+
+    // Add click event to all path elements (regions)
+    svg.selectAll("path").on("click", function() {
+        // Remove yellow border from all regions
+        svg.selectAll("path")
+            .style("stroke", "white")
+            .style("stroke-width", "0.5");
+
+        // Add yellow border to clicked region
+        d3.select(this)
+            .style("stroke", "yellow")
+            .style("stroke-width", "2");
+    });
 });
