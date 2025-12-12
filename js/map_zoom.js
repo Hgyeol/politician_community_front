@@ -22,11 +22,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listeners to the buttons
     zoomInButton.on("click", () => {
-        svg.transition().duration(750).call(zoom.scaleBy, 1.2); // Zoom in by 20%
+        svg.transition().duration(750).call(zoom.scaleBy, 2); // Zoom in by 100%
     });
 
     zoomOutButton.on("click", () => {
-        svg.transition().duration(750).call(zoom.scaleBy, 0.8); // Zoom out by 20%
+        svg.transition().duration(750).call(zoom.scaleBy, 0.5); // Zoom out by 50%
     });
 
     zoomResetButton.on("click", () => {
