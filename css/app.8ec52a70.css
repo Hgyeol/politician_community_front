@@ -2286,7 +2286,8 @@ body,p,tr {
 
 svg {
     overflow: hidden;
-    border: 2px solid #333
+    border: 1px solid #121212;
+    border-radius: 10px;
 }
 
 .btn_emd_rate_tt {
