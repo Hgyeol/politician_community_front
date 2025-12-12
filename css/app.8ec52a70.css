@@ -1300,7 +1300,7 @@ body,p,tr {
     border-radius: 10px;
     box-sizing: border-box;
     margin-left: 10px;
-    margin-right: 10px
+    margin-right: 10px;
 }
 
 .map-wrapper .background {
@@ -2285,7 +2285,8 @@ body,p,tr {
 }
 
 svg {
-    overflow: hidden
+    overflow: hidden;
+    border: 2px solid #333
 }
 
 .btn_emd_rate_tt {
