@@ -1,0 +1,1 @@
+export { default } from "file:///Users/gimhangyeol/politican_community/politician_community_front/politician-map/node_modules/@nuxt/vite-builder/dist/runtime/client.manifest.mjs"
