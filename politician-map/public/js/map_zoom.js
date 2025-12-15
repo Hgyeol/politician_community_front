@@ -44,5 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
         d3.select(this)
             .style("stroke", "yellow")
             .style("stroke-width", "2");
+        
+        // Get region name and open modal
+        const regionName = d3.select(this).attr("name");
+        if (window.openPoliticianModal) {
+            window.openPoliticianModal(regionName);
+        }
     });
 });
