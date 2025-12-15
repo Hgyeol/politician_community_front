@@ -1,51 +1,47 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="show" class="modal-overlay" @click="closeModal">
-        <div class="modal-container" @click.stop>
-          <button class="modal-close" @click="closeModal">×</button>
+  <Transition name="panel">
+    <div v-if="show" class="panel-container">
+      <button class="panel-close" @click="closeModal">×</button>
 
-          <div v-if="politician" class="modal-content">
-            <div class="politician-image">
-              <img
-                v-if="politicianImage"
-                :src="politicianImage"
-                :alt="politician.의원명"
-                @error="handleImageError"
-              >
-              <div v-else class="no-image">
-                사진 없음
-              </div>
-            </div>
-
-            <div class="politician-info">
-              <h2>{{ politician.의원명 }}</h2>
-              <div class="info-row">
-                <span class="label">지역</span>
-                <span class="value">{{ politician.지역 }}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">정당</span>
-                <span class="value">{{ politician.정당 }}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">소속위원회</span>
-                <span class="value">{{ politician.소속위원회 }}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">당선</span>
-                <span class="value">{{ politician.당선횟수 }} ({{ politician.당선방법 }})</span>
-              </div>
-            </div>
+      <div v-if="politician" class="panel-content">
+        <div class="politician-image">
+          <img
+            v-if="politicianImage"
+            :src="politicianImage"
+            :alt="politician.의원명"
+            @error="handleImageError"
+          >
+          <div v-else class="no-image">
+            사진 없음
           </div>
+        </div>
 
-          <div v-else class="modal-content">
-            <p class="no-data">선택한 지역의 의원 정보를 찾을 수 없습니다.</p>
+        <div class="politician-info">
+          <h2>{{ politician.의원명 }}</h2>
+          <div class="info-row">
+            <span class="label">지역</span>
+            <span class="value">{{ politician.지역 }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">정당</span>
+            <span class="value">{{ politician.정당 }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">소속위원회</span>
+            <span class="value">{{ politician.소속위원회 }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">당선</span>
+            <span class="value">{{ politician.당선횟수 }}<template v-if="politician.당선방법"> ({{ politician.당선방법 }})</template></span>
           </div>
         </div>
       </div>
-    </Transition>
-  </Teleport>
+
+      <div v-else class="panel-content">
+        <p class="no-data">선택한 지역의 의원 정보를 찾을 수 없습니다.</p>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup>
@@ -95,31 +91,20 @@ function closeModal() {
 </script>
 
 <style scoped>
-.modal-overlay {
+.panel-container {
   position: fixed;
+  right: 0;
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.modal-container {
+  width: 400px;
+  height: 100vh;
   background: white;
-  border-radius: 16px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
+  border-left: 1px solid #e2e8f0;
   overflow-y: auto;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
-.modal-close {
+.panel-close {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -137,13 +122,13 @@ function closeModal() {
   z-index: 1;
 }
 
-.modal-close:hover {
+.panel-close:hover {
   background: rgba(0, 0, 0, 0.2);
   transform: scale(1.1);
 }
 
-.modal-content {
-  padding: 40px;
+.panel-content {
+  padding: 40px 24px;
 }
 
 .politician-image {
@@ -194,7 +179,7 @@ function closeModal() {
 .label {
   font-weight: 600;
   color: #4a5568;
-  min-width: 120px;
+  min-width: 100px;
   font-size: 15px;
 }
 
@@ -212,30 +197,25 @@ function closeModal() {
   padding: 40px 20px;
 }
 
-/* Modal transition */
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-active .modal-container,
-.modal-leave-active .modal-container {
+/* Panel transition */
+.panel-enter-active,
+.panel-leave-active {
   transition: transform 0.3s ease;
 }
 
-.modal-enter-from .modal-container,
-.modal-leave-to .modal-container {
-  transform: scale(0.9);
+.panel-enter-from,
+.panel-leave-to {
+  transform: translateX(100%);
 }
 
-@media (max-width: 640px) {
-  .modal-content {
-    padding: 24px;
+@media (max-width: 768px) {
+  .panel-container {
+    width: 320px;
+    min-width: 320px;
+  }
+
+  .panel-content {
+    padding: 24px 16px;
   }
 
   .politician-image {

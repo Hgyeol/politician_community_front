@@ -1,6 +1,6 @@
 <template>
   <ClientOnly>
-    <div>
+    <div class="main-layout">
       <div v-html="htmlContent"></div>
       <PoliticianModal
         :show="showModal"
@@ -80,6 +80,10 @@ function closeModal() {
 }
 </script>
 
-<style>
-/* Global styles are loaded from /app.css via nuxt.config.ts */
+<style scoped>
+.main-layout {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
 </style>
