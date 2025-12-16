@@ -38,6 +38,10 @@ export default defineNuxtConfig({
     }
   },
 
+  devServer: {
+    port: 8080
+  },
+
   // D3.js가 클라이언트 사이드에서만 동작하도록
   build: {
     transpile: ['d3']
