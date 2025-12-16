@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -130,15 +130,34 @@ const form = ref({
 const submitting = ref(false)
 const error = ref('')
 
+// New function to reset the form and submitting state
+function resetForm() {
+  form.value = {
+    politician_id: route.query.politician_id as string || '', // Re-apply from query if present
+    category: '',
+    title: '',
+    content: ''
+  }
+  submitting.value = false
+  error.value = '' // Also clear any previous errors
+}
+
 onMounted(async () => {
   await loadPoliticians()
-
-  // URL 파라미터로 politician_id가 있으면 자동 선택
-  const politicianIdParam = route.query.politician_id
-  if (politicianIdParam) {
-    form.value.politician_id = politicianIdParam as string
-  }
+  resetForm() // Ensure clean state on initial mount
 })
+
+// Add onActivated hook for potential component reuse
+onActivated(() => {
+  resetForm() // Ensure clean state when component is re-activated (e.g., via keep-alive)
+})
+
+// Watch route changes to ensure reset when navigating back to this specific page
+watch(() => route.fullPath, (newPath) => {
+  if (newPath === '/suggestions/new') {
+    resetForm() // Ensure a full reset when navigating specifically to this page
+  }
+}, { immediate: true })
 
 async function handleSubmit() {
   if (submitting.value) return
@@ -160,13 +179,17 @@ async function handleSubmit() {
     }
 
     if (data) {
-      // 성공 시 상세 페이지로 이동
+      resetForm() // Explicitly reset on success before navigation
       router.push(`/suggestions/${data.id}`)
     }
   } catch (err: any) {
     error.value = err.message || '건의사항 작성 중 오류가 발생했습니다'
   } finally {
-    submitting.value = false
+    // 버튼이 다시 활성화되도록 보장합니다. 특히 에러가 발생한 경우.
+    // (submitting.value가 현재 true인 경우에만 false로 설정)
+    if (submitting.value === true) {
+      submitting.value = false
+    }
   }
 }
 </script>

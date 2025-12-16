@@ -124,170 +124,146 @@
               :key="comment.id"
               class="border-b border-gray-200 pb-4 last:border-0"
             >
-              <!-- Parent Comment -->
-              <div>
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex items-center space-x-3">
-                    <span class="font-medium text-gray-900">{{ getCommentNickname(comment) }}</span>
-                    <span class="text-sm text-gray-500">{{ formatDate(comment.created_at) }}</span>
-                  </div>
-                  <div class="flex gap-2">
-                    <button
-                      v-if="isAuthenticated"
-                      @click="replyToComment(comment)"
-                      class="text-sm text-gray-600 hover:text-blue-700"
-                    >
-                      답글
-                    </button>
-                    <template v-if="user && (user.id || user.sub) === comment.user_id">
-                      <button
-                        @click="handleEditComment(comment)"
-                        class="text-sm text-gray-800 hover:text-blue-800"
-                      >
-                        수정
-                      </button>
-                      <button
-                        @click="handleDeleteComment(comment.id)"
-                        class="text-sm text-red-600 hover:text-red-800"
-                      >
-                        삭제
-                      </button>
-                    </template>
-                  </div>
-                </div>
-
-                <div v-if="editingCommentId === comment.id">
-                  <textarea
-                    v-model="editingCommentContent"
-                    rows="3"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
-                  ></textarea>
-                  <div class="flex justify-end gap-2">
-                    <button
-                      @click="handleUpdateComment(comment.id)"
-                      class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
-                    >
-                      저장
-                    </button>
-                    <button
-                      @click="cancelEditComment"
-                      class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
-                    >
-                      취소
-                    </button>
-                  </div>
-                </div>
-                <p v-else class="text-gray-700 whitespace-pre-wrap">{{ comment.content }}</p>
-
-
-              </div>
-
-              <!-- Replies -->
-              <div
-                v-if="comment.replies && comment.replies.length > 0"
-                class="ml-8 mt-4 space-y-4 border-t border-gray-200 pt-4"
-              >
-                <div
-                  v-for="reply in comment.replies"
-                  :key="reply.id"
-                >
-                  <div class="flex justify-between items-start mb-2">
-                    <div class="flex items-center space-x-3">
-                      <span class="font-medium text-gray-900">{{ getCommentNickname(reply) }}</span>
-                      <span class="text-sm text-gray-500">{{ formatDate(reply.created_at) }}</span>
-                    </div>
-                    <div class="flex gap-2">
-                      <template v-if="user && (user.id || user.sub) === reply.user_id">
-                        <button
-                          @click="handleEditComment(reply)"
-                          class="text-sm text-gray-800 hover:text-blue-800"
-                        >
-                          수정
-                        </button>
-                        <button
-                          @click="handleDeleteComment(reply.id)"
-                          class="text-sm text-red-600 hover:text-red-800"
-                        >
-                          삭제
-                        </button>
-                      </template>
-                    </div>
-                  </div>
-
-                  <div v-if="editingCommentId === reply.id">
-                    <textarea
-                      v-model="editingCommentContent"
-                      rows="3"
-                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
-                    ></textarea>
-                    <div class="flex justify-end gap-2">
-                      <button
-                        @click="handleUpdateComment(reply.id)"
-                        class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
-                      >
-                        저장
-                      </button>
-                      <button
-                        @click="cancelEditComment"
-                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
-                      >
-                        취소
-                      </button>
-                    </div>
-                  </div>
-                  <p v-else class="text-gray-700 whitespace-pre-wrap">{{ reply.content }}</p>
-                </div>
-
-                <!-- Inline Reply Input (after all replies) -->
-                <div v-if="isAuthenticated && replyingToCommentId === comment.id" class="mt-4">
-                  <textarea
-                    v-model="newReplyContent"
-                    rows="3"
-                    placeholder="답글을 작성하세요"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
-                  ></textarea>
-                  <div class="flex justify-end gap-2">
-                    <button
-                      @click="handleCreateComment(comment.id)"
-                      :disabled="!newComment.trim() || commentSubmitting"
-                      class="px-6 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                      답글 작성
-                    </button>
-                    <button
-                      @click="cancelReply"
-                      class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300"
-                    >
-                      취소
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Inline Reply Input (if no replies exist) -->
-              <div v-else-if="isAuthenticated && replyingToCommentId === comment.id" class="mt-4 ml-8">
-                <textarea
-                  v-model="newReplyContent"
-                  rows="3"
-                  placeholder="답글을 작성하세요"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
-                ></textarea>
-                <div class="flex justify-end gap-2">
-                  <button
-                    @click="handleCreateComment(comment.id)"
-                    :disabled="!newComment.trim() || commentSubmitting"
-                    class="px-6 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    답글 작성
-                  </button>
-                  <button
-                    @click="cancelReply"
-                    class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300"
-                  >
-                    취소
-                  </button>
-                </div>
-              </div>
+                            <div> <!-- NEW WRAPPING DIV START -->
+                              <!-- Parent Comment -->
+                              <div>
+                                <div class="flex justify-between items-start mb-2">
+                                  <div class="flex items-center space-x-3">
+                                    <span class="font-medium text-gray-900">{{ getCommentNickname(comment) }}</span>
+                                    <span class="text-sm text-gray-500">{{ formatDate(comment.created_at) }}</span>
+                                  </div>
+                                  <div class="flex gap-2">
+                                    <button
+                                      v-if="isAuthenticated"
+                                      @click="replyToComment(comment)"
+                                      class="text-sm text-gray-600 hover:text-blue-700"
+                                    >
+                                      답글
+                                    </button>
+                                    <template v-if="user && (user.id || user.sub) === comment.user_id">
+                                      <button
+                                        @click="handleEditComment(comment)"
+                                        class="text-sm text-gray-800 hover:text-blue-800"
+                                      >
+                                        수정
+                                      </button>
+                                      <button
+                                        @click="handleDeleteComment(comment.id)"
+                                        class="text-sm text-red-600 hover:text-red-800"
+                                      >
+                                      삭제
+                                      </button>
+                                    </template>
+                                  </div>
+                                </div>
+              
+                                <div v-if="editingCommentId === comment.id">
+                                  <textarea
+                                    v-model="editingCommentContent"
+                                    rows="3"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
+                                  ></textarea>
+                                  <div class="flex justify-end gap-2">
+                                    <button
+                                      @click="handleUpdateComment(comment.id)"
+                                      class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
+                                    >
+                                      저장
+                                    </button>
+                                    <button
+                                      @click="cancelEditComment"
+                                      class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
+                                    >
+                                      취소
+                                    </button>
+                                  </div>
+                                </div>
+                                <p v-else class="text-gray-700 whitespace-pre-wrap">{{ comment.content }}</p>
+              
+                                <!-- REPLY INPUT FORM FOR TOP-LEVEL COMMENT -->
+                                <div v-if="isAuthenticated && replyingToCommentId === comment.id" class="mt-4">
+                                  <textarea
+                                    v-model="newReplyContent"
+                                    rows="3"
+                                    placeholder="답글을 작성하세요"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
+                                  ></textarea>
+                                  <div class="flex justify-end gap-2">
+                                    <button
+                                      @click="handleCreateComment(comment.id)"
+                                      :disabled="!newReplyContent.trim() || commentSubmitting"
+                                      class="px-6 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    >
+                                      답글 작성
+                                    </button>
+                                    <button
+                                      @click="cancelReply"
+                                      class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300"
+                                    >
+                                      취소
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+              
+              
+                              <!-- Replies -->
+                              <div
+                                v-if="comment.replies && comment.replies.length > 0"
+                                class="ml-8 mt-4 space-y-4 border-t border-gray-200 pt-4"
+                              >
+                                <div
+                                  v-for="reply in comment.replies"
+                                  :key="reply.id"
+                                >
+                                  <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center space-x-3">
+                                      <span class="font-medium text-gray-900">{{ getCommentNickname(reply) }}</span>
+                                      <span class="text-sm text-gray-500">{{ formatDate(reply.created_at) }}</span>
+                                    </div>
+                                                        <div class="flex gap-2">
+                                                          <template v-if="user && (user.id || user.sub) === reply.user_id">
+                                                            <button
+                                                              @click="handleEditComment(reply)"
+                                                              class="text-sm text-gray-800 hover:text-blue-800"
+                                                            >
+                                                              수정
+                                                            </button>
+                                                            <button
+                                                              @click="handleDeleteComment(reply.id)"
+                                                              class="text-sm text-red-600 hover:text-red-800"
+                                                            >
+                                                              삭제
+                                                            </button>
+                                                          </template>
+                                                        </div>                                  </div>
+              
+                                  <div v-if="editingCommentId === reply.id">
+                                    <textarea
+                                      v-model="editingCommentContent"
+                                      rows="3"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
+                                    ></textarea>
+                                    <div class="flex justify-end gap-2">
+                                      <button
+                                        @click="handleUpdateComment(reply.id)"
+                                        class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
+                                      >
+                                        저장
+                                      </button>
+                                      <button
+                                        @click="cancelEditComment"
+                                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
+                                      >
+                                        취소
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <p v-else class="text-gray-700 whitespace-pre-wrap">{{ reply.content }}</p>
+              
+                                                                  </div>
+                              </div>
+                            </div> <!-- NEW WRAPPING DIV END -->
             </div>
           </template>
 
@@ -327,6 +303,7 @@ const editingCommentContent = ref('')
 
 const replyingToCommentId = ref<number | null>(null)
 const newReplyContent = ref('')
+const replyingToNickname = ref<string | null>(null)
 
 const isOwner = computed(() => {
   const userId = user.value?.id || user.value?.sub

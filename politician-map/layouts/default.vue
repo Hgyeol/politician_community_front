@@ -31,7 +31,7 @@
       </div>
     </nav>
     <main>
-      <slot />
+      <slot :key="$route.fullPath" />
     </main>
   </div>
 </template>
