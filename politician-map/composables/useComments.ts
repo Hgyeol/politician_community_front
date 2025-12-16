@@ -11,7 +11,8 @@ export function useComments(suggestionId: number) {
       const { data: commentData, error: commentError } = await supabase
         .from('comments')
         .select(`
-          *
+          *,
+          parent_id
         `)
         .eq('suggestion_id', suggestionId)
         .order('created_at', { ascending: true })
@@ -55,7 +56,7 @@ export function useComments(suggestionId: number) {
   }
 
   // 댓글 작성
-  const createComment = async (content: string) => {
+  const createComment = async (content: string, parentId: number | null = null) => {
     try {
       const user = useSupabaseUser()
       if (!user.value) {
@@ -71,7 +72,8 @@ export function useComments(suggestionId: number) {
         .insert([{
           content,
           suggestion_id: suggestionId,
-          user_id: userId
+          user_id: userId,
+          parent_id: parentId // Add parent_id here
         }])
         .select('id')
         .single()

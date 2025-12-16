@@ -87,10 +87,16 @@
 
         <!-- 댓글 작성 -->
         <div v-if="isAuthenticated" class="mb-8">
+          <div v-if="replyingToCommentId" class="mb-2 p-3 bg-gray-100 rounded-lg flex justify-between items-center text-sm text-gray-700">
+            <span>{{ getCommentNickname(comments.find(c => c.id === replyingToCommentId)) }}님에게 답글 작성 중</span>
+            <button @click="cancelReply" class="text-red-500 hover:text-red-700 font-medium">
+              취소
+            </button>
+          </div>
           <textarea
             v-model="newComment"
             rows="3"
-            placeholder="댓글을 작성하세요"
+            :placeholder="replyingToCommentId ? '답글을 작성하세요' : '댓글을 작성하세요'"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
           ></textarea>
           <div class="flex justify-end">
@@ -99,7 +105,7 @@
               :disabled="!newComment.trim() || commentSubmitting"
               class="px-6 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {{ commentSubmitting ? '작성 중...' : '댓글 작성' }}
+              {{ commentSubmitting ? '작성 중...' : (replyingToCommentId ? '답글 작성' : '댓글 작성') }}
             </button>
           </div>
         </div>
@@ -116,57 +122,128 @@
 
         <!-- 댓글 목록 -->
         <div class="space-y-4">
-          <div
-            v-for="comment in comments"
-            :key="comment.id"
-            class="border-b border-gray-200 pb-4 last:border-0"
-          >
-            <div class="flex justify-between items-start mb-2">
-              <div class="flex items-center space-x-3">
-                <span class="font-medium text-gray-900">{{ comment.profiles?.nickname || '익명' }}</span>
-                <span class="text-sm text-gray-500">{{ formatDate(comment.created_at) }}</span>
+          <template v-if="comments.length > 0">
+            <div
+              v-for="comment in threadedComments"
+              :key="comment.id"
+              class="border-b border-gray-200 pb-4 last:border-0"
+            >
+              <!-- Parent Comment -->
+              <div>
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex items-center space-x-3">
+                    <span class="font-medium text-gray-900">{{ getCommentNickname(comment) }}</span>
+                    <span class="text-sm text-gray-500">{{ formatDate(comment.created_at) }}</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button
+                      v-if="isAuthenticated"
+                      @click="replyToComment(comment)"
+                      class="text-sm text-gray-600 hover:text-blue-700"
+                    >
+                      답글
+                    </button>
+                    <template v-if="user && (user.id || user.sub) === comment.user_id">
+                      <button
+                        @click="handleEditComment(comment)"
+                        class="text-sm text-gray-800 hover:text-blue-800"
+                      >
+                        수정
+                      </button>
+                      <button
+                        @click="handleDeleteComment(comment.id)"
+                        class="text-sm text-red-600 hover:text-red-800"
+                      >
+                        삭제
+                      </button>
+                    </template>
+                  </div>
+                </div>
+
+                <div v-if="editingCommentId === comment.id">
+                  <textarea
+                    v-model="editingCommentContent"
+                    rows="3"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
+                  ></textarea>
+                  <div class="flex justify-end gap-2">
+                    <button
+                      @click="handleUpdateComment(comment.id)"
+                      class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
+                    >
+                      저장
+                    </button>
+                    <button
+                      @click="cancelEditComment"
+                      class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+                <p v-else class="text-gray-700 whitespace-pre-wrap">{{ comment.content }}</p>
               </div>
-              <div v-if="user && (user.id || user.sub) === comment.user_id" class="flex gap-2">
-                <button
-                  @click="handleEditComment(comment)"
-                  class="text-sm text-gray-800 hover:text-blue-800"
+
+              <!-- Replies -->
+              <div
+                v-if="comment.replies && comment.replies.length > 0"
+                class="ml-8 mt-4 space-y-4 border-t border-gray-200 pt-4"
+              >
+                <div
+                  v-for="reply in comment.replies"
+                  :key="reply.id"
                 >
-                  수정
-                </button>
-                <button
-                  @click="handleDeleteComment(comment.id)"
-                  class="text-sm text-red-600 hover:text-red-800"
-                >
-                  삭제
-                </button>
+                  <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center space-x-3">
+                      <span class="font-medium text-gray-900">{{ getCommentNickname(reply) }}</span>
+                      <span class="text-sm text-gray-500">{{ formatDate(reply.created_at) }}</span>
+                    </div>
+                    <div class="flex gap-2">
+                      <template v-if="user && (user.id || user.sub) === reply.user_id">
+                        <button
+                          @click="handleEditComment(reply)"
+                          class="text-sm text-gray-800 hover:text-blue-800"
+                        >
+                          수정
+                        </button>
+                        <button
+                          @click="handleDeleteComment(reply.id)"
+                          class="text-sm text-red-600 hover:text-red-800"
+                        >
+                          삭제
+                        </button>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div v-if="editingCommentId === reply.id">
+                    <textarea
+                      v-model="editingCommentContent"
+                      rows="3"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
+                    ></textarea>
+                    <div class="flex justify-end gap-2">
+                      <button
+                        @click="handleUpdateComment(reply.id)"
+                        class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
+                      >
+                        저장
+                      </button>
+                      <button
+                        @click="cancelEditComment"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                  <p v-else class="text-gray-700 whitespace-pre-wrap">{{ reply.content }}</p>
+                </div>
               </div>
             </div>
+          </template>
 
-            <div v-if="editingCommentId === comment.id">
-              <textarea
-                v-model="editingCommentContent"
-                rows="3"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-2"
-              ></textarea>
-              <div class="flex justify-end gap-2">
-                <button
-                  @click="handleUpdateComment(comment.id)"
-                  class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
-                >
-                  저장
-                </button>
-                <button
-                  @click="cancelEditComment"
-                  class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300"
-                >
-                  취소
-                </button>
-              </div>
-            </div>
-            <p v-else class="text-gray-700 whitespace-pre-wrap">{{ comment.content }}</p>
-          </div>
-
-          <div v-if="comments.length === 0" class="text-center py-8 text-gray-500">
+          <div v-else class="text-center py-8 text-gray-500">
             아직 댓글이 없습니다. 첫 댓글을 작성해보세요!
           </div>
         </div>
@@ -197,13 +274,50 @@ const error = ref('')
 const newComment = ref('')
 const commentSubmitting = ref(false)
 
-const editingCommentId = ref(null)
+const editingCommentId = ref<number | null>(null)
 const editingCommentContent = ref('')
+
+const replyingToCommentId = ref<number | null>(null)
+const replyingToNickname = ref<string | null>(null)
 
 const isOwner = computed(() => {
   const userId = user.value?.id || user.value?.sub
   return user.value && suggestion.value && userId === suggestion.value.user_id
 })
+
+// Helper to get nickname from comment or profile
+const getCommentNickname = (comment: any) => {
+  return comment.profiles?.nickname || '익명'
+}
+
+const threadedComments = computed(() => {
+  const topLevelComments = comments.value.filter(comment => !comment.parent_id);
+  const replies = comments.value.filter(comment => comment.parent_id);
+
+  const commentsMap = new Map(comments.value.map(comment => [comment.id, { ...comment, replies: [] }]));
+
+  replies.forEach(reply => {
+    const parent = commentsMap.get(reply.parent_id);
+    if (parent) {
+      parent.replies.push(reply);
+    }
+  });
+
+  // Sort top-level comments by creation date
+  topLevelComments.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  // Sort replies for each top-level comment by creation date
+  commentsMap.forEach(comment => {
+    if (comment.replies) {
+      comment.replies.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    }
+  });
+
+  // Only return top-level comments with their direct replies
+  // This structure currently supports one level of nesting (original comment + direct replies)
+  return topLevelComments.map(comment => commentsMap.get(comment.id));
+})
+
 
 onMounted(async () => {
   await loadSuggestion()
@@ -230,12 +344,15 @@ async function handleCreateComment() {
 
   commentSubmitting.value = true
 
-  const { error: createError } = await createComment(newComment.value)
+  const { error: createError } = await createComment(newComment.value, replyingToCommentId.value)
 
   if (createError) {
     alert('댓글 작성에 실패했습니다: ' + createError)
   } else {
     newComment.value = ''
+    cancelReply() // Clear reply state after successful comment
+    // After creating a comment, reload all comments to ensure the threaded structure is updated
+    await loadComments()
   }
 
   commentSubmitting.value = false
@@ -244,11 +361,28 @@ async function handleCreateComment() {
 function handleEditComment(comment: any) {
   editingCommentId.value = comment.id
   editingCommentContent.value = comment.content
+  cancelReply() // Exit reply mode when editing
 }
 
 function cancelEditComment() {
   editingCommentId.value = null
   editingCommentContent.value = ''
+}
+
+function cancelReply() {
+  replyingToCommentId.value = null
+  replyingToNickname.value = null
+}
+
+function replyToComment(comment: any) {
+  replyingToCommentId.value = comment.id
+  replyingToNickname.value = getCommentNickname(comment)
+  cancelEditComment() // Exit edit mode when replying
+}
+
+async function handleEdit() {
+  // 수정 기능은 추후 구현
+  alert('수정 기능은 현재 준비 중입니다')
 }
 
 async function handleUpdateComment(commentId: number) {
@@ -270,12 +404,10 @@ async function handleDeleteComment(commentId: number) {
 
   if (deleteError) {
     alert('댓글 삭제에 실패했습니다: ' + deleteError)
+  } else {
+    // After deleting a comment, reload all comments to ensure the threaded structure is updated
+    await loadComments()
   }
-}
-
-function handleEdit() {
-  // 수정 기능은 추후 구현
-  alert('수정 기능은 현재 준비 중입니다')
 }
 
 async function handleDelete() {
