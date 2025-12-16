@@ -7,7 +7,7 @@
 
     <div v-else-if="politician">
       <!-- 정치인 정보 헤더 -->
-      <div class="bg-white border border-gray-200 p-8 mb-8">
+      <div class="bg-white border-4 p-8 mb-8" :style="{ borderColor: partyColor }">
         <div class="flex items-start gap-8">
           <!-- 왼쪽: 국회의원 사진과 정보 -->
           <div class="flex-1 flex gap-6">
@@ -271,6 +271,24 @@ const partyImageSrc = computed(() => {
   };
 
   return partyImageMap[politician.value.정당] || '';
+});
+
+// 정당별 색상 매핑
+const partyColor = computed(() => {
+  if (!politician.value || !politician.value.정당) return '#d1d5db'; // 기본 회색
+
+  const partyColorMap = {
+    '무소속': '#9ca3af',
+    '민주당': '#1b2c7a',
+    '더불어민주당': '#1b2c7a',
+    '국민의힘': '#E61E2B',
+    '새로운미래': '#45BABD',
+    '개혁신당': '#FF7210',
+    '진보당': '#f4a4bd',
+    '조국혁신당': '#0073cf'
+  };
+
+  return partyColorMap[politician.value.정당] || '#d1d5db';
 });
 
 // 검색 및 필터 핸들러
