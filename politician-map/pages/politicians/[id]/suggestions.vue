@@ -107,9 +107,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
-definePageMeta({
-  layout: 'default'
-})
 
 const route = useRoute()
 const router = useRouter()
