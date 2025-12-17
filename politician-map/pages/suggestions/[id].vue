@@ -504,7 +504,12 @@ async function handleDelete() {
   if (deleteError) {
     alert('삭제에 실패했습니다: ' + deleteError)
   } else {
-    router.push('/suggestions')
+    const targetPoliticianId = suggestion.value?.politician_id
+    if (targetPoliticianId) {
+      router.push(`/politicians/${targetPoliticianId}/suggestions`)
+    } else {
+      router.push('/suggestions')
+    }
   }
 }
 
