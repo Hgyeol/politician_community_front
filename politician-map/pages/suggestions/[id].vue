@@ -62,33 +62,84 @@
             ← 목록으로
           </button>
           <div v-if="isOwner" class="flex gap-2">
-            <button
-              @click="handleEdit"
-              class="px-4 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition-colors"
-            >
-              수정
-            </button>
-            <button
-              @click="handleDelete"
-              class="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-            >
-              삭제
-            </button>
+            <template v-if="!isEditing">
+              <button
+                @click="handleEdit"
+                class="px-4 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition-colors"
+              >
+                수정
+              </button>
+              <button
+                @click="handleDelete"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+              >
+                삭제
+              </button>
+            </template>
+            <template v-else>
+              <button
+                @click="handleSaveEdit"
+                :disabled="editSubmitting"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed"
+              >
+                {{ editSubmitting ? '저장 중...' : '저장' }}
+              </button>
+              <button
+                @click="cancelEditMode"
+                :disabled="editSubmitting"
+                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:cursor-not-allowed"
+              >
+                취소
+              </button>
+            </template>
           </div>
         </div>
       </div>
 
       <!-- 건의사항 본문 -->
       <div class="bg-white border border-gray-200 rounded-lg p-8 mb-6">
-        <div class="mb-4">
-          <span class="px-3 py-1 bg-gray-50 text-gray-700 rounded-full text-sm font-medium">
-            {{ suggestion.category }}
-          </span>
+        <div class="mb-6">
+          <template v-if="!isEditing">
+            <span class="px-3 py-1 bg-gray-50 text-gray-700 rounded-full text-sm font-medium">
+              {{ suggestion.category }}
+            </span>
+          </template>
+          <template v-else>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">카테고리</label>
+            <select
+              v-model="editForm.category"
+              class="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">카테고리를 선택하세요</option>
+              <option
+                v-for="category in categories"
+                :key="category"
+                :value="category"
+              >
+                {{ category }}
+              </option>
+            </select>
+          </template>
         </div>
 
-        <h1 class="text-3xl font-bold text-gray-900 mb-6">
-          {{ suggestion.title }}
-        </h1>
+        <div class="mb-6">
+          <template v-if="!isEditing">
+            <h1 class="text-3xl font-bold text-gray-900">
+              {{ suggestion.title }}
+            </h1>
+          </template>
+          <template v-else>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">제목</label>
+            <input
+              v-model="editForm.title"
+              type="text"
+              maxlength="100"
+              class="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="제목을 입력하세요"
+            />
+            <p class="mt-1 text-sm text-gray-500">{{ editForm.title.length }}/100</p>
+          </template>
+        </div>
 
         <div class="flex items-center justify-between text-sm text-gray-500 mb-8 pb-6 border-b border-gray-200">
           <div class="flex items-center space-x-4">
@@ -108,8 +159,18 @@
           </div>
         </div>
 
-        <div class="prose max-w-none">
+        <div v-if="!isEditing" class="prose max-w-none">
           <p class="text-gray-800 whitespace-pre-wrap leading-relaxed">{{ suggestion.content }}</p>
+        </div>
+        <div v-else>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">내용</label>
+          <textarea
+            v-model="editForm.content"
+            rows="10"
+            maxlength="2000"
+            class="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          ></textarea>
+          <p class="mt-1 text-sm text-gray-500">{{ editForm.content.length }}/2000</p>
         </div>
       </div>
 
@@ -312,7 +373,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 
 definePageMeta({
   layout: false
@@ -321,7 +382,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const { user, isAuthenticated, signOut } = useAuth()
-const { getSuggestion, deleteSuggestion } = useSuggestions()
+const { getSuggestion, deleteSuggestion, updateSuggestion } = useSuggestions()
 
 const handleSignOut = async () => {
   await signOut()
@@ -344,6 +405,25 @@ const editingCommentContent = ref('')
 const replyingToCommentId = ref<number | null>(null)
 const newReplyContent = ref('')
 const replyingToNickname = ref<string | null>(null)
+
+const isEditing = ref(false)
+const editSubmitting = ref(false)
+const editForm = reactive({
+  title: '',
+  category: '',
+  content: ''
+})
+
+const categories = [
+  '경제',
+  '교육',
+  '환경',
+  '복지',
+  '안전',
+  '교통',
+  '문화',
+  '기타'
+]
 
 const isOwner = computed(() => {
   const userId = user.value?.id || user.value?.sub
@@ -466,9 +546,44 @@ function goToList() {
   }
 }
 
-async function handleEdit() {
-  // 수정 기능은 추후 구현
-  alert('수정 기능은 현재 준비 중입니다')
+function handleEdit() {
+  if (!suggestion.value) return
+  editForm.title = suggestion.value.title || ''
+  editForm.category = suggestion.value.category || ''
+  editForm.content = suggestion.value.content || ''
+  isEditing.value = true
+}
+
+function cancelEditMode() {
+  isEditing.value = false
+  editForm.title = ''
+  editForm.category = ''
+  editForm.content = ''
+}
+
+async function handleSaveEdit() {
+  if (!editForm.title.trim() || !editForm.category || !editForm.content.trim()) {
+    alert('카테고리, 제목, 내용을 모두 입력해주세요.')
+    return
+  }
+
+  editSubmitting.value = true
+  const payload = {
+    title: editForm.title.trim(),
+    category: editForm.category,
+    content: editForm.content.trim()
+  }
+
+  const { error: updateError } = await updateSuggestion(suggestionId, payload)
+
+  if (updateError) {
+    alert('건의사항 수정에 실패했습니다: ' + updateError)
+  } else {
+    await loadSuggestion()
+    cancelEditMode()
+  }
+
+  editSubmitting.value = false
 }
 
 async function handleUpdateComment(commentId: number) {
