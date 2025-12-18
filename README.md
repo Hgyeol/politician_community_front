@@ -150,7 +150,7 @@ npm run dev
 
 ## 🎥 시연 영상
 
-[YouTube 링크 예정]
+https://youtu.be/0SM38wnP3IA
 
 ---
 
